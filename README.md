@@ -68,3 +68,6 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+"# todolist-tree-"  git init git add README.md git commit -m "without design" git branch -M main git remote add origin https://github.com/BalaenicepsRex473/todolist-tree-.git git push -u origin main
+"# todolist-tree-"  git init git add README.md git commit -m "without design" git branch -M main git remote add origin https://github.com/BalaenicepsRex473/todolist-tree-.git git push -u origin mai
+"# todolist-tree-" 
