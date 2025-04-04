@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import TextInput from './Textinput/textinput';
 
-const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
+const TreeNode = ({ node, onAddChild, onDeleteNode, onToggleComplete }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newNodeName, setNewNodeName] = useState('');
@@ -27,9 +27,6 @@ const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
         setNewNodeName('');
         setIsAdding(false);
       }
-    } else if (e.key === 'Escape') {
-      setNewNodeName('');
-      setIsAdding(false);
     }
   };
 
@@ -48,10 +45,20 @@ const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
     onDeleteNode(node.id);
   };
 
+  const handleToggleComplete = (e) => {
+    e.stopPropagation();
+    onToggleComplete(node.id);
+  };
+
   return (
     <div className="todo-item">
       <div className="flex items-center todo-row">
-        <input type="checkbox" className="todo-checkbox" />
+        <input 
+          type="checkbox" 
+          className="todo-checkbox" 
+          checked={node.completed || false}
+          onChange={handleToggleComplete}
+        />
         <div 
           className="cursor-pointer text-lg flex-grow todo-text"
           onClick={() => setExpanded(!expanded)}
@@ -63,7 +70,7 @@ const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
         </div>
         <div className="todo-actions">
           <button 
-            onClick={handleAddClick}
+            onClick={handleAddClick} 
             className="add-button"
           >
             +
@@ -84,7 +91,7 @@ const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
               value={newNodeName}
               onChange={(e) => setNewNodeName(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Название элемента"
+              label="Add a new task"
               color="#9D9D9D"
               autoFocus
             />
@@ -106,6 +113,7 @@ const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
               node={child} 
               onAddChild={onAddChild}
               onDeleteNode={onDeleteNode}
+              onToggleComplete={onToggleComplete}
             />
           ))}
         </div>
@@ -114,7 +122,7 @@ const TreeNode = ({ node, onAddChild, onDeleteNode }) => {
   );
 };
 
-const TreeView = ({ data, onAddNode, onDeleteNode }) => {
+const TreeView = ({ data, onAddNode, onDeleteNode, onToggleComplete }) => {
   const [newTodoName, setNewTodoName] = useState('');
 
   const handleAddTodo = (e) => {
@@ -135,7 +143,7 @@ const TreeView = ({ data, onAddNode, onDeleteNode }) => {
         <TextInput
           value={newTodoName}
           onChange={(e) => setNewTodoName(e.target.value)}
-          placeholder="Add a new task"
+          label="Add a new task"
           color="#9D9D9D"
         />
         <button type="submit" className="add-task-button">Add</button>
@@ -147,6 +155,7 @@ const TreeView = ({ data, onAddNode, onDeleteNode }) => {
             node={node} 
             onAddChild={onAddNode}
             onDeleteNode={onDeleteNode}
+            onToggleComplete={onToggleComplete}
           />
         ))}
       </div>
@@ -154,20 +163,23 @@ const TreeView = ({ data, onAddNode, onDeleteNode }) => {
   );
 };
 
-const initialTreeData = [
-];
+const initialTreeData = [];
 
 export default function App() {
-  const [treeData, setTreeData] = useState(initialTreeData);
+  const [treeData, setTreeData] = useState(() => {
+    const savedData = localStorage.getItem('todoListData');
+    return savedData ? JSON.parse(savedData) : initialTreeData;
+  });
 
   useEffect(() => {
+    localStorage.setItem('todoListData', JSON.stringify(treeData));
   }, [treeData]);
 
   const addNode = (parentId, newNodeName) => {
     const newId = Date.now();
     
     if (parentId === null) {
-      setTreeData([...treeData, { id: newId, name: newNodeName, children: [] }]);
+      setTreeData([...treeData, { id: newId, name: newNodeName, children: [], completed: false }]);
       return;
     }
     
@@ -176,7 +188,29 @@ export default function App() {
         if (node.id === parentId) {
           return {
             ...node,
-            children: [...(node.children || []), { id: newId, name: newNodeName, children: [] }]
+            children: [...(node.children || []), { id: newId, name: newNodeName, children: [], completed: false }]
+          };
+        }
+        if (node.children) {
+          return {
+            ...node,
+            children: updateNode(node.children)
+          };
+        }
+        return node;
+      });
+    };
+
+    setTreeData(updateNode(treeData));
+  };
+
+  const toggleComplete = (nodeId) => {
+    const updateNode = (nodes) => {
+      return nodes.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            completed: !node.completed
           };
         }
         if (node.children) {
@@ -208,5 +242,10 @@ export default function App() {
     setTreeData(filterNodes(treeData));
   };
 
-  return <TreeView data={treeData} onAddNode={addNode} onDeleteNode={deleteNode} />;
+  return <TreeView 
+    data={treeData} 
+    onAddNode={addNode} 
+    onDeleteNode={deleteNode} 
+    onToggleComplete={toggleComplete}
+  />;
 }
